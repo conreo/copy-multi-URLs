@@ -1,6 +1,6 @@
 {
   "name": "copy-multi-urls",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Firefox extension to copy all URLs from selected text",
   "scripts": {
