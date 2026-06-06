@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - run: npm install -g addons-linter web-ext
+
+      - name: web-ext lint
+        run: web-ext lint
+
+      - name: Validate manifest JSON
+        run: python3 -m json.tool manifest.json > /dev/null
+
+      - name: Verify required files exist
+        run: |
+          for f in manifest.json background.js content.js icons/icon-32.png icons/icon-48.png icons/icon-64.png icons/icon-96.png icons/icon-128.png; do
+            test -f "$f" || { echo "Missing: $f"; exit 1; }
+          done
+          echo "All required files present"
+
+  release:
+    name: Build & release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package extension
+        run: |
+          zip -r copy-multi-urls.zip \
+            manifest.json background.js content.js \
+            icons/ LICENSE README.md \
+            -x "*.git*" ".github/*" "docs/*"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: copy-multi-urls.zip
+          generate_release_notes: true
