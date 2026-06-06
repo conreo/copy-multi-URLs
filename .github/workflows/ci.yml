@@ -6,9 +6,17 @@ on:
   pull_request:
     branches: [main]
 
+# ── Least privilege ──────────────────────────────────────────
+permissions:
+  contents: read
+  actions: read
+  security-events: write  # needed for CodeQL upload
+
 jobs:
+
+  # ── Lint & audit ───────────────────────────────────────────
   lint:
-    name: Lint extension
+    name: Lint & audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,28 +25,91 @@ jobs:
         with:
           node-version: 24
 
-      - run: npm install -g addons-linter web-ext
+      - name: Install dependencies
+        run: npm ci
 
-      - name: web-ext lint
-        run: web-ext lint
+      - name: Unit tests
+        run: npm test
+
+      - name: web-ext lint (AMO compliance)
+        run: npx web-ext lint
 
       - name: Validate manifest JSON
         run: python3 -m json.tool manifest.json > /dev/null
 
-      - name: Verify required files exist
+      - name: Verify required files
         run: |
-          for f in manifest.json background.js content.js icons/icon-32.png icons/icon-48.png icons/icon-64.png icons/icon-96.png icons/icon-128.png; do
-            test -f "$f" || { echo "Missing: $f"; exit 1; }
+          for f in manifest.json background.js content.js \
+                   icons/icon-32.png icons/icon-48.png icons/icon-64.png \
+                   icons/icon-96.png icons/icon-128.png; do
+            test -f "$f" || { echo "MISSING: $f"; exit 1; }
           done
           echo "All required files present"
 
+      # ── Security: manifest audit ──────────────────────────
+      - name: Manifest security audit
+        run: |
+          echo "=== Checking for dangerous patterns ==="
+          MANIFEST=$(cat manifest.json)
+
+          # No remote scripts
+          if echo "$MANIFEST" | grep -qE '"content_security_policy".*"script-src.*https?://'; then
+            echo "FAIL: remote script source in CSP"
+            exit 1
+          fi
+
+          # Data collection declared
+          if ! echo "$MANIFEST" | grep -q 'data_collection_permissions'; then
+            echo "WARN: no data_collection_permissions declared"
+          fi
+
+          # No eval
+          if echo "$MANIFEST" | grep -qE '"content_security_policy".*unsafe-eval'; then
+            echo "WARN: unsafe-eval in CSP"
+          fi
+
+          echo "Manifest security audit passed"
+
+      # ── Security: scan background & content scripts ────────
+      - name: Script security scan
+        run: |
+          echo "=== Checking for eval / innerHTML / remote fetches ==="
+          for f in background.js content.js; do
+            echo "--- $f ---"
+            if grep -n 'eval(' "$f"; then
+              echo "WARN: eval() found in $f"
+            fi
+            if grep -n 'innerHTML' "$f"; then
+              echo "WARN: innerHTML found in $f"
+            fi
+          done
+          echo "Script security scan complete"
+
+  # ── CodeQL analysis ────────────────────────────────────────
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - uses: github/codeql-action/analyze@v3
+
+  # ── Release ────────────────────────────────────────────────
   release:
     name: Build & release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: lint
+    needs: [lint, codeql]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write   # GitHub Release
+      id-token: write   # optional: provenance
     steps:
       - uses: actions/checkout@v4
 
