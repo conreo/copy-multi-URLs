@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.zip
+web-ext-artifacts/
+
+# Env
+.env
+.env.local
