@@ -1,4 +1,4 @@
-## 🔗 Copy Multi URLs — AMO Submission
+## Copy Multi URLs — AMO Submission
 
 ### Name
 **Copy Multi URLs**
@@ -27,12 +27,12 @@ at once. No more copying links one by one.
 3. All URLs are extracted, deduplicated, and copied — one per line
 
 ### Features
-- 🖱️ **Right-click context menu** — "Copy selected URLs" on text selection, "Copy link URL" on any link
-- 🔧 **Toolbar button** — click the extension icon to copy selected URLs instantly
-- ⌨️ **Keyboard shortcut** — `Ctrl+Shift+U` (`MacCtrl+Shift+U` on Mac)
-- ✨ **Smart extraction** — finds both plain-text `https://` URLs and anchor `<a href="...">` elements
-- 🔄 **Auto-deduplication** — duplicate URLs are removed automatically
-- 🔊 **Notification** — confirms how many URLs were copied
+- **Right-click context menu** — "Copy selected URLs" on text selection, "Copy link URL" on any link
+- **Toolbar button** — click the extension icon to copy selected URLs instantly
+- **Keyboard shortcut** — `Ctrl+Shift+U` (`MacCtrl+Shift+U` on Mac)
+- **Smart extraction** — finds both plain-text `https://` URLs and anchor `<a href="...">` elements
+- **Auto-deduplication** — duplicate URLs are removed automatically
+- **Notification** — confirms how many URLs were copied
 
 ### Privacy
 **This extension collects zero data.** URLs are copied locally to your clipboard —
