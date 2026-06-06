@@ -138,7 +138,7 @@ jobs:
           echo "All key files present in release zip"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: copy-multi-urls.zip
           generate_release_notes: true
