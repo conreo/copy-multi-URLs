@@ -120,26 +120,25 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Package extension
+      - name: Package extension (.xpi)
         run: |
-          zip -r copy-multi-urls.zip \
+          zip -r copy-multi-urls.xpi \
             manifest.json background.js content.js \
             src/ icons/ LICENSE README.md \
             -x "*.git*" ".github/*" "docs/*" "tests/*" "node_modules/*"
 
-      - name: Verify release zip
+      - name: Verify release xpi
         run: |
-          echo "Release zip contents:"
-          unzip -l copy-multi-urls.zip
+          echo "XPI contents:"
+          unzip -l copy-multi-urls.xpi
           echo ""
-          echo "Verifying key files in zip..."
           for f in manifest.json background.js src/url-extractor.js content.js; do
-            unzip -p copy-multi-urls.zip "$f" > /dev/null || { echo "MISSING in zip: $f"; exit 1; }
+            unzip -p copy-multi-urls.xpi "$f" > /dev/null || { echo "MISSING: $f"; exit 1; }
           done
-          echo "All key files present in release zip"
+          echo "All key files present"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          files: copy-multi-urls.zip
+          files: copy-multi-urls.xpi
           generate_release_notes: true
