@@ -31,8 +31,14 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      - name: npm audit (production)
+        run: npm audit --production || true
+
+      - name: npm audit (all)
+        run: npm audit --audit-level=critical
+
       - name: web-ext lint (AMO compliance)
-        run: npx web-ext lint --ignore-files='tests/**' 'node_modules/**' 'vitest.config.js' '*.json'
+        run: npx web-ext lint --ignore-files='tests/**' 'node_modules/**' 'vitest.config.js' 'package.json' 'package-lock.json'
 
       - name: Validate manifest JSON
         run: python3 -m json.tool manifest.json > /dev/null
@@ -117,8 +123,19 @@ jobs:
         run: |
           zip -r copy-multi-urls.zip \
             manifest.json background.js content.js \
-            icons/ LICENSE README.md \
-            -x "*.git*" ".github/*" "docs/*"
+            src/ icons/ LICENSE README.md \
+            -x "*.git*" ".github/*" "docs/*" "tests/*" "node_modules/*"
+
+      - name: Verify release zip
+        run: |
+          echo "Release zip contents:"
+          unzip -l copy-multi-urls.zip
+          echo ""
+          echo "Verifying key files in zip..."
+          for f in manifest.json background.js src/url-extractor.js content.js; do
+            unzip -p copy-multi-urls.zip "$f" > /dev/null || { echo "MISSING in zip: $f"; exit 1; }
+          done
+          echo "All key files present in release zip"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
